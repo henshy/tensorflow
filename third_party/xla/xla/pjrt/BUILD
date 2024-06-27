@@ -86,6 +86,7 @@ cc_library(
     hdrs = ["tracked_device_buffer.h"],
     deps = [
         ":event_pool",
+        ":pjrt_client",
         "//xla:shape_tree",
         "//xla:shape_util",
         "//xla/service:executable",

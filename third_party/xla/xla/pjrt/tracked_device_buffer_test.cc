@@ -46,7 +46,7 @@ absl::StatusOr<std::shared_ptr<TrackedDeviceBuffer>> MakeArray(
       }));
   return std::make_shared<TrackedDeviceBuffer>(
       client->backend().memory_allocator(), /*device_ordinal=*/0,
-      device_buffers,
+      /*physical_device_ordinal=*/0, device_buffers,
       absl::Span<const std::shared_ptr<BufferSequencingEvent>>(), nullptr);
 }
 
