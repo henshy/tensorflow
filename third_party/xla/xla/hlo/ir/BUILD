@@ -64,6 +64,7 @@ cc_library(
         ":backend_config",
         ":ptrvec",
         ":tile_assignment",
+        "//third_party/protobuf:protobuf_lite",
         "//xla:array",
         "//xla:comparison_util",
         "//xla:literal",
@@ -215,5 +216,32 @@ cc_library(
         "@com_google_absl//absl/container:inlined_vector",
         "@com_google_absl//absl/log:check",
         "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_library(
+    name = "collective_device_list",
+    srcs = ["collective_device_list.cc"],
+    hdrs = ["collective_device_list.h"],
+    deps = [
+        ":tile_assignment",
+        "//third_party/protobuf:protobuf_lite",
+        "//xla:xla_data_proto_cc",
+        "//xla/service:hlo_proto_cc",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/log:check",
+        "@com_google_absl//absl/strings",
+        "@com_google_absl//absl/types:span",
+    ],
+)
+
+cc_test(
+    name = "collective_device_list_test",
+    srcs = ["collective_device_list_test.cc"],
+    deps = [
+        ":collective_device_list",
+        "//xla:xla_data_proto_cc",
+        "//xla/service:hlo_proto_cc",
+        "@com_google_googletest//:gtest_main",
     ],
 )
