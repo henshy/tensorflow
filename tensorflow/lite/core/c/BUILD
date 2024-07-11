@@ -279,6 +279,9 @@ tflite_cc_library_with_c_headers_test(
     visibility = [
         "//tensorflow/lite:__subpackages__",
     ] + c_api_visibility_allowlist(),
+    deps = [
+        "//tensorflow/compiler/mlir/lite/core/c:c_api_types",
+    ],
 )
 
 # Test the C extension API code.

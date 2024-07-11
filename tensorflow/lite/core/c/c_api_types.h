@@ -38,6 +38,8 @@ limitations under the License.
 
 #include <stdint.h>
 
+#include "tensorflow/compiler/mlir/lite/core/c/c_api_types.h"  // IWYU pragma: keep
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -111,30 +113,6 @@ typedef enum TfLiteStatus {
   // should also return this status code.
   kTfLiteCancelled = 8,
 } TfLiteStatus;
-
-/// Types supported by tensor
-typedef enum {
-  kTfLiteNoType = 0,
-  kTfLiteFloat32 = 1,
-  kTfLiteInt32 = 2,
-  kTfLiteUInt8 = 3,
-  kTfLiteInt64 = 4,
-  kTfLiteString = 5,
-  kTfLiteBool = 6,
-  kTfLiteInt16 = 7,
-  kTfLiteComplex64 = 8,
-  kTfLiteInt8 = 9,
-  kTfLiteFloat16 = 10,
-  kTfLiteFloat64 = 11,
-  kTfLiteComplex128 = 12,
-  kTfLiteUInt64 = 13,
-  kTfLiteResource = 14,
-  kTfLiteVariant = 15,
-  kTfLiteUInt32 = 16,
-  kTfLiteUInt16 = 17,
-  kTfLiteInt4 = 18,
-  kTfLiteBFloat16 = 19,
-} TfLiteType;
 
 /// Legacy. Will be deprecated in favor of `TfLiteAffineQuantization`.
 /// If per-layer quantization is specified this field will still be populated in

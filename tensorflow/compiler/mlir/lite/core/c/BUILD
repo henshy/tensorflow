@@ -37,3 +37,10 @@ alias(
     ],
 )
 # LINT.ThenChange(//tensorflow/lite/core/c:private_common)
+
+cc_library(
+    name = "c_api_types",
+    hdrs = ["c_api_types.h"],
+    compatible_with = get_compatible_with_portable(),
+    copts = tflite_copts(),
+)
