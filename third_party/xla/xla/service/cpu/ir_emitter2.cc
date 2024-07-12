@@ -189,7 +189,7 @@ class IrEmitter2::ElementalIrEmitter : public xla::ElementalIrEmitter {
 
     // Add a thread local call to the nested computation.
     VLOG(2) << "Emit thread local call to: " << callee.name();
-    nested_ir_emitter_->b()->SetInsertPoint(b()->GetInsertPoint());
+    nested_ir_emitter_->builder()->SetInsertPoint(b()->GetInsertPoint());
     auto values = nested_ir_emitter_->EmitThreadLocalCall(
         callee, parameters, name, is_reducer, /*in_compute_function=*/false);
 
