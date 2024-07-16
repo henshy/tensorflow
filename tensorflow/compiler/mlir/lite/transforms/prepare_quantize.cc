@@ -342,6 +342,15 @@ void PrepareQuantizePass::runOnOperation() {
     quant_specs_.legacy_float_scale = legacy_float_scale_;
     quant_specs_.disable_set_input_nodes_quantization_params =
         disable_set_input_nodes_quantization_params_;
+    for (const auto& ir : input_ranges_) {
+      std::pair<std::string, std::string> input_range =
+          absl::StrSplit(sir, '|');
+      double min;
+      double max;
+      (void)absl::SimpleAtod(input_range.first, &min);
+      (void)absl::SimpleAtod(input_range.second, &max);
+      quant_specs_.input_ranges.emplace_back(min, max);
+    }
   }
 
   if (quant_specs_.post_training_quantization) {
