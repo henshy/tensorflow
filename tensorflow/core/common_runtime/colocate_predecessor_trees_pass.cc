@@ -135,20 +135,21 @@ bool AreAllInNodesQualifiedConst(const Node& node) {
 Status ColocatePredecessorTreesPass::Run(
     const GraphOptimizationPassOptions& options) {
   if (!flags::Global().enable_tf2min_ici_weight.value()) {
+    LOG(INFO) << "ColocatePredecessorTreesPass is disabled.";
     return absl::OkStatus();
   }
+  LOG(INFO) << "ColocatePredecessorTreesPass is enabled.";
 
   // find all potential node.
   if (options.graph == nullptr) {
-    VLOG(1) << "No graph in colocate_predecessor_trees_pass.\n";
+    LOG(INFO) << "No graph in colocate_predecessor_trees_pass.\n";
     return absl::OkStatus();
   }
   Graph* graph = options.graph->get();
-  if (VLOG_IS_ON(1)) {
-    VLOG(1) << DumpGraphToFile("before_colocate_predecessor_trees", *graph,
-                               options.flib_def);
-  }
+  VLOG(1) << DumpGraphToFile("graph_before_colocate_predecessor_trees", *graph,
+                             options.flib_def);
 
+  bool is_graph_changed = false;
   for (Node* node : graph->nodes()) {
     if (!IsValidFillOp(*node)) {
       continue;
@@ -156,6 +157,7 @@ Status ColocatePredecessorTreesPass::Run(
     auto colocation_name = GetColocateStringName(*node);
     if (!colocation_name.has_value()) continue;
     if (!AreAllInNodesQualifiedConst(*node)) continue;
+    is_graph_changed = true;
     node->AddAttr(std::string(kClassAttr), {*colocation_name});
     for (auto in_node : node->in_nodes()) {
       in_node->AddAttr(std::string(kClassAttr), {*colocation_name});
@@ -165,9 +167,15 @@ Status ColocatePredecessorTreesPass::Run(
     }
   }
 
-  if (VLOG_IS_ON(1)) {
-    VLOG(1) << DumpGraphToFile("after_colocate_predecessor_trees", *graph,
-                               options.flib_def);
+  if (is_graph_changed) {
+    LOG(INFO) << "Graph is changed by ColocatePredecessorTreesPass.";
+    VLOG(1) << DumpGraphToFile("graph_changed_after_colocate_predecessor_trees",
+                               *graph, options.flib_def);
+  } else {
+    LOG(INFO) << "Graph is not changed by ColocatePredecessorTreesPass.";
+    VLOG(1) << DumpGraphToFile(
+        "graph_not_changed_after_colocate_predecessor_trees", *graph,
+        options.flib_def);
   }
 
   return absl::OkStatus();
