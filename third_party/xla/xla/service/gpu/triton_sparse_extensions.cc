@@ -42,6 +42,7 @@ limitations under the License.
 #include "mlir/IR/PatternMatch.h"  // from @llvm-project
 #include "mlir/IR/Types.h"  // from @llvm-project
 #include "mlir/IR/Value.h"  // from @llvm-project
+#include "mlir/IR/Visitors.h"  // from @llvm-project
 #include "mlir/Pass/Pass.h"  // from @llvm-project
 #include "mlir/Pass/PassRegistry.h"  // from @llvm-project
 #include "mlir/Support/LLVM.h"  // from @llvm-project
@@ -471,6 +472,18 @@ class SparseLocalLoadToLLVMPass
   }
 
   void runOnOperation() override {
+    // Exit early if there are no sparse ops.
+    mlir::ModuleOp mod = getOperation();
+    if (!mod.walk([](triton::gpu::LocalLoadOp op) {
+              if (isa<triton::gpu::SparseDotMetaEncodingAttr>(
+                      op.getType().getEncoding())) {
+                return WalkResult::interrupt();
+              }
+              return WalkResult::advance();
+            })
+             .wasInterrupted()) {
+      return;
+    }
     // Allocate shared memory and set barrier
     // This is also done in the TritonGPUToLLVMPass but we need to do it before
     // we write the local load op to LLVM to have barriers in the right place.
