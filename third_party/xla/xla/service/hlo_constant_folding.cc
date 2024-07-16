@@ -21,6 +21,9 @@ limitations under the License.
 #include <utility>
 #include <vector>
 
+#include "absl/log/log.h"
+#include "absl/time/clock.h"
+#include "absl/time/time.h"
 #include "xla/hlo/evaluator/hlo_evaluator.h"
 #include "xla/hlo/ir/dfs_hlo_visitor_with_default.h"
 #include "xla/hlo/ir/hlo_computation.h"
@@ -163,6 +166,16 @@ absl::StatusOr<bool> HloConstantFolding::Run(
         continue;
       }
 
+      if (instruction->opcode() == HloOpcode::kPad &&
+          instruction->operand(0)->opcode() == HloOpcode::kBroadcast &&
+          instruction->operand(1)->opcode() == HloOpcode::kConstant) {
+        // Reduce the compile time by skipping the constant folding of pad
+        // instruction with broadcast operand. With 45m shape limit the compile
+        // time could be more than 30 seconds. According to the current
+        // benchmarks it does not affect the performance.
+        continue;
+      }
+
       // Don't constant fold unless output and operand sizes are small.
       if (instruction->shape().IsArray()) {
         int64_t elements_in_operands = 0;
@@ -177,10 +190,14 @@ absl::StatusOr<bool> HloConstantFolding::Run(
         static const int64_t kMaximumConstantSizeElements = 45 * 1000 * 1000;
         if (std::max(elements_in_constant, elements_in_operands) >
             kMaximumConstantSizeElements) {
+          VLOG(2) << "Ignore constant folding: reusult shape size is "
+                  << elements_in_constant << " total size of arguments is "
+                  << elements_in_operands;
           continue;
         }
       }
 
+      absl::Time start_time = absl::Now();
       VLOG(5) << "Constant folding: " << instruction->ToString();
 
       absl::Duration slow_timeout =
@@ -198,11 +215,13 @@ absl::StatusOr<bool> HloConstantFolding::Run(
                   "inherently a trade-off between compilation time and speed "
                   "at runtime. XLA has some guards that attempt to keep "
                   "constant folding from taking too long, but fundamentally "
-                  "you'll always be able to come up with an input program that "
+                  "you'll always be able to come up with an input program "
+                  "that "
                   "takes a long time.\n\n"
                   "If you'd like to file a bug, run with envvar "
                   "XLA_FLAGS=--xla_dump_to=/tmp/foo and attach the results."
-                : "XLA was built without compiler optimizations, which can be "
+                : "XLA was built without compiler optimizations, which can "
+                  "be "
                   "slow. Try rebuilding with -c opt.";
         return absl::StrFormat(
             "Constant folding an instruction is taking > %s:\n\n"
@@ -226,6 +245,8 @@ absl::StatusOr<bool> HloConstantFolding::Run(
       slow_alarm.cancel();
       if (slow_alarm.fired()) {
         slow_op_counter_++;
+        LOG(ERROR) << "Constant folding took: " << absl::Now() - start_time
+                   << " for instruction: " << instruction->ToString();
       }
 
       VLOG(4) << "Constant folded: " << instruction->ToString();
@@ -233,10 +254,10 @@ absl::StatusOr<bool> HloConstantFolding::Run(
       HloInstruction* new_constant = instruction->AddInstruction(
           HloInstruction::CreateConstant(std::move(result)));
       if (new_constant->shape().has_layout()) {
-        // Update element_size_in_bits on the new instruction's layout. Literals
-        // always have element_size_in_bits set to 0, and CreateConstant copies
-        // the shape/layout from the Literal, so we need to set
-        // element_size_in_bits here.
+        // Update element_size_in_bits on the new instruction's layout.
+        // Literals always have element_size_in_bits set to 0, and
+        // CreateConstant copies the shape/layout from the Literal, so we need
+        // to set element_size_in_bits here.
         new_constant->mutable_shape()
             ->mutable_layout()
             ->set_element_size_in_bits(

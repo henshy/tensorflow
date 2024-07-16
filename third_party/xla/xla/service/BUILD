@@ -5454,6 +5454,8 @@ cc_library(
         "//xla/hlo/evaluator:hlo_evaluator",
         "//xla/hlo/ir:hlo",
         "//xla/hlo/utils:hlo_query",
+        "@com_google_absl//absl/log",
+        "@com_google_absl//absl/time",
         "@local_tsl//tsl/platform:errors",
     ],
 )
@@ -5468,6 +5470,7 @@ xla_cc_test(
         ":pattern_matcher",
         ":pattern_matcher_gmock",
         "//xla:literal",
+        "//xla:literal_util",
         "//xla:permutation_util",
         "//xla:shape_util",
         "//xla:test",
@@ -5479,6 +5482,9 @@ xla_cc_test(
         "//xla/tests:literal_test_util",
         "//xla/tests:xla_internal_test_main",
         "@com_google_absl//absl/strings:string_view",
+        "@com_google_absl//absl/types:span",
+        "@com_google_googletest//:gtest_main",
+        "@local_tsl//tsl/platform:statusor",
     ],
 )
 
